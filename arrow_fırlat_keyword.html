@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Keyword Ok Oyunu</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top right, #f0f8ff, #ffffff);
+      overflow: hidden;
+      height: 100vh;
+      cursor: crosshair;
+      user-select: none;
+    }
+
+    .floatingEmoji {
+      position: absolute;
+      font-size: 40px;
+      opacity: 0.6;
+      animation: floatEmoji 8s infinite ease-in-out;
+    }
+    .emoji1 { animation-duration: 12s; left: 10%; top: 20%; }
+    .emoji2 { animation-duration: 10s; left: 30%; top: 60%; }
+    .emoji3 { animation-duration: 14s; left: 70%; top: 25%; }
+    .emoji4 { animation-duration: 9s; left: 85%; top: 75%; }
+    .emoji5 { animation-duration: 11s; left: 55%; top: 45%; }
+
+    @keyframes floatEmoji {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(10deg); }
+      100% { transform: translateY(0px) rotate(-10deg); }
+    }
+
+    #startScreen {
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      color: #000;
+      text-align: center;
+      z-index: 2;
+    }
+    #startScreen h1 { font-size: 28px; margin-bottom: 16px; }
+    #startScreen p { font-size: 18px; margin-bottom: 12px; }
+    #startScreen button {
+      padding: 12px 24px;
+      font-size: 18px;
+      background: #00c896;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+    }
+
+    #bow, #arrow {
+      position: absolute;
+      width: 100px;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      transform-origin: center center;
+      pointer-events: none;
+    }
+
+    #bow {
+      top: 50%;
+      left: 50%;
+      width:100px;
+      z-index: 2;
+    }
+
+    #arrow {
+      top: 50%;
+      left: 50%;
+      width: 90px;
+      z-index: 2;
+    }
+
+    .fallingWord {
+      position: absolute;
+      font-size: 20px;
+      font-weight: bold;
+      background: #444;
+      padding: 10px 16px;
+      border-radius: 6px;
+      color: white;
+      animation: fall 6s linear;
+      user-select: none;
+    }
+
+    @keyframes fall {
+      0% { top: -40px; }
+      100% { top: 100vh; }
+    }
+
+    .spark {
+      position: absolute;
+      font-size: 20px;
+      pointer-events: none;
+      transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+    }
+
+    .floatText {
+      position: absolute;
+      font-size: 40px;
+      font-weight: bold;
+      animation: floatFade 1.2s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes floatFade {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-30px); opacity: 0; }
+    }
+
+    #scoreCounter {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      background: #fff;
+      padding: 10px 20px;
+      font-size: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Emojili Giriş Sahnesi -->
+  <div class="floatingEmoji emoji1">🐍</div>
+  <div class="floatingEmoji emoji2">💡</div>
+  <div class="floatingEmoji emoji3">🎯</div>
+  <div class="floatingEmoji emoji4">🧠</div>
+  <div class="floatingEmoji emoji5">🚀</div>
+
+  <div id="startScreen">
+    <h1>🎯 Python Keyword Ok Oyunu</h1>
+    <p>Yukarıdan düşen Python kelimelerine dikkat et!</p>
+    <p>Sadece <strong>gerçek</strong> Python keyword'lerine ok fırlat!</p>
+    <button onclick="startGame()">Oyuna Başla</button>
+  </div>
+
+  <div id="gameArea">
+    <div id="scoreCounter">Skor: <span id="score">0</span></div>
+    <img id="bow" src="https://raw.githubusercontent.com/erhan3861/arrow-concept-game/main/bow1.png" alt="Yay">
+    <img id="arrow" src="https://raw.githubusercontent.com/erhan3861/arrow-concept-game/main/arrow1.png" alt="Ok">
+  </div>
+
+  <!-- Ses Efektleri -->
+    <audio id="correctSound" src="https://raw.githubusercontent.com/erhan3861/arrow-concept-game/main/correct.wav"></audio>
+    <audio id="wrongSound" src="https://raw.githubusercontent.com/erhan3861/arrow-concept-game/main/wrong.mp3"></audio>
+
+  <script>
+    const keywords = ["if", "else", "for", "while", "def", "class", "return", "import", "from", "try", "except", "lambda"];
+    const fakeWords = ["define", "func", "elseif", "switch", "then", "repeat"];
+
+    const gameArea = document.getElementById("gameArea");
+    const startScreen = document.getElementById("startScreen");
+    const bow = document.getElementById("bow");
+    const arrow = document.getElementById("arrow");
+    const scoreEl = document.getElementById("score");
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+
+
+    let score = 0;
+    let angle = -90;
+    let arrowFired = false;
+
+    function startGame() {
+      startScreen.style.display = "none";
+      gameArea.style.display = "block";
+      setInterval(spawnWord, 1300);
+    }
+
+    function spawnWord() {
+      const isKeyword = Math.random() > 0.4;
+      const word = isKeyword ? keywords[Math.floor(Math.random() * keywords.length)] : fakeWords[Math.floor(Math.random() * fakeWords.length)];
+      const span = document.createElement("div");
+      span.className = "fallingWord";
+      span.textContent = word;
+      span.style.left = `${Math.floor(Math.random() * (window.innerWidth - 100))}px`;
+      span.dataset.valid = isKeyword ? "true" : "false";
+      gameArea.appendChild(span);
+      setTimeout(() => span.remove(), 6500);
+    }
+
+    function explodeParticles(x, y) {
+      for (let i = 0; i < 10; i++) {
+        const spark = document.createElement("div");
+        spark.className = "spark";
+        spark.textContent = "✨";
+        spark.style.left = `${x}px`;
+        spark.style.top = `${y}px`;
+        gameArea.appendChild(spark);
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 30;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        requestAnimationFrame(() => {
+          spark.style.transform = `translate(${dx}px, ${dy}px)`;
+          spark.style.opacity = "0";
+        });
+
+        setTimeout(() => spark.remove(), 2000);
+      }
+    }
+
+    function showFloatText(text, x, y, color) {
+      const floatText = document.createElement("div");
+      floatText.className = "floatText";
+      floatText.style.left = `${x}px`;
+      floatText.style.top = `${y}px`;
+      floatText.style.color = color;
+      floatText.textContent = text;
+      gameArea.appendChild(floatText);
+      setTimeout(() => floatText.remove(), 1200);
+    }
+
+    document.addEventListener("click", (e) => {
+  if (arrowFired) return;
+
+  arrowFired = true;
+
+  const startX = window.innerWidth / 2;
+  const startY = window.innerHeight / 2;
+
+  const targetX = e.clientX;
+  const targetY = e.clientY;
+
+  const dx = targetX - startX;
+  const dy = targetY - startY;
+
+  const steps = 15;
+  let currentStep = 0;
+
+  function animateArrow() {
+    if (currentStep > steps) {
+      // Vuruş kontrolü yapılır
+      let hit = false;
+      document.querySelectorAll(".fallingWord").forEach(word => {
+        const r = word.getBoundingClientRect();
+        if (targetX+30 >= r.left && targetX-30 <= r.right && targetY+30 >= r.top && targetY-30 <= r.bottom) {
+          hit = true;
+          const correct = word.dataset.valid === "true";
+          if (correct) {explodeParticles(targetX, targetY);
+            correctSound.currentTime = 0;
+            correctSound.play();
+          } else {
+            wrongSound.currentTime = 0;
+            wrongSound.play();
+          }
+          showFloatText(correct ? "+1" : "💥 -1", targetX, targetY, correct ? "green" : "red");
+          score += correct ? 1 : -1;
+          scoreEl.textContent = score;
+          word.remove();
+        }
+      });
+
+      arrowFired = false;
+      arrow.style.left = "50%";
+      arrow.style.top = "50%";
+      return;
+    }
+
+    const progress = currentStep / steps;
+    const x = startX + dx * progress;
+    const y = startY + dy * progress;
+
+    arrow.style.left = `${x}px`;
+    arrow.style.top = `${y}px`;
+
+    currentStep++;
+    requestAnimationFrame(animateArrow);
+  }
+
+  animateArrow();
+});
+
+
+    document.addEventListener("mousemove", (e) => {
+      const rect = bow.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = e.clientX - centerX;
+      const dy = e.clientY - centerY;
+      angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      bow.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+      if (!arrowFired) arrow.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+    });
+
+   
+  </script>
+</body>
+</html>
